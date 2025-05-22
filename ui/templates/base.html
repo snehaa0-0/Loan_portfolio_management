@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Loan Portfolio Manager{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background-color: #343a40;
+            color: #fff;
+        }
+        .nav-link {
+            color: #ced4da;
+        }
+        .nav-link:hover {
+            color: #fff;
+            background-color: #495057;
+        }
+        .active {
+            background-color: #495057;
+            color: #fff;
+        }
+        .content {
+            padding: 20px;
+        }
+        .loan-card {
+            transition: transform 0.3s;
+        }
+        .loan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar p-0">
+                <div class="d-flex flex-column p-3">
+                    <h3 class="text-center mb-4">Loan Portfolio</h3>
+                    <ul class="nav nav-pills flex-column mb-auto">
+                        <li class="nav-item">
+                            <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('loans') }}" class="nav-link {% if request.endpoint == 'loans' %}active{% endif %}">
+                                <i class="fas fa-money-bill-wave me-2"></i>All Loans
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('add_loan') }}" class="nav-link {% if request.endpoint == 'add_loan' %}active{% endif %}">
+                                <i class="fas fa-plus-circle me-2"></i>Add New Loan
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('reports') }}" class="nav-link {% if request.endpoint == 'reports' %}active{% endif %}">
+                                <i class="fas fa-chart-bar me-2"></i>Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('settings') }}" class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}">
+                                <i class="fas fa-cog me-2"></i>Settings
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-10 content">
+                <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+                    <div class="container-fluid">
+                        <span class="navbar-brand">{% block page_title %}{% endblock %}</span>
+                        <div class="d-flex">
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user me-2"></i>Admin
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li><a class="dropdown-item" href="#">Profile</a></li>
+                                    <li><a class="dropdown-item" href="#">Settings</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#">Logout</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+                
+                {% for category, message in get_flashed_messages(with_categories=true) %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

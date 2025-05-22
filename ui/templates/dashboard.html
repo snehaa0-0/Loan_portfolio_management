@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Loan Portfolio Manager{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Active Loans</h5>
+                    <h2 class="card-text">{{ total_active_loans }}</h2>
+                    <p class="card-text">
+                        {% if active_loans_change > 0 %}
+                        <i class="fas fa-arrow-up me-1"></i>
+                        {% elif active_loans_change < 0 %}
+                        <i class="fas fa-arrow-down me-1"></i>
+                        {% endif %}
+                        {{ active_loans_change|abs }}% from last month
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Principal</h5>
+                    <h2 class="card-text">${{ total_principal|format_currency }}</h2>
+                    <p class="card-text">
+                        {% if principal_change > 0 %}
+                        <i class="fas fa-arrow-up me-1"></i>
+                        {% elif principal_change < 0 %}
+                        <i class="fas fa-arrow-down me-1"></i>
+                        {% endif %}
+                        {{ principal_change|abs }}% from last month
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h5 class="card-title">At-Risk Loans</h5>
+                    <h2 class="card-text">{{ at_risk_loans }}</h2>
+                    <p class="card-text">
+                        {% if risk_loans_change > 0 %}
+                        <i class="fas fa-arrow-up me-1"></i>
+                        {% elif risk_loans_change < 0 %}
+                        <i class="fas fa-arrow-down me-1"></i>
+                        {% endif %}
+                        {{ risk_loans_change|abs }}% from last month
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Expected Interest</h5>
+                    <h2 class="card-text">${{ expected_interest|format_currency }}</h2>
+                    <p class="card-text">
+                        {% if interest_change > 0 %}
+                        <i class="fas fa-arrow-up me-1"></i>
+                        {% elif interest_change < 0 %}
+                        <i class="fas fa-arrow-down me-1"></i>
+                        {% endif %}
+                        {{ interest_change|abs }}% from last month
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Loan Distribution by Status</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="loanStatusChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title">Monthly Cash Flow Projection</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="cashFlowChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity and Upcoming Payments -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title m-0">Recent Activity</h5>
+                    <a href="{{ url_for('activity_log') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ activity.title }}</h6>
+                                <small>{{ activity.timestamp|format_datetime }}</small>
+                            </div>
+                            <p class="mb-1">{{ activity.description }}</p>
+                            <small class="text-muted">{{ activity.user }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title m-0">Upcoming Payments</h5>
+                    <a href="{{ url_for('payment_calendar') }}" class="btn btn-sm btn-outline-primary">View Calendar</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for payment in upcoming_payments %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ payment.borrower }}</h6>
+                                <span class="badge {% if payment.days_until <= 3 %}bg-danger{% elif payment.days_until <= 7 %}bg-warning{% else %}bg-info{% endif %}">
+                                    Due in {{ payment.days_until }} days
+                                </span>
+                            </div>
+                            <p class="mb-1">${{ payment.amount|format_currency }} - Loan #{{ payment.loan_id }}</p>
+                            <small>Due date: {{ payment.due_date|format_date }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Row -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Loan Portfolio Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Loan Type</th>
+                                    <th>Count</th>
+                                    <th>Total Principal</th>
+                                    <th>Avg. Interest Rate</th>
+                                    <th>Avg. Term</th>
+                                    <th>Risk Level</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in loan_categories %}
+                                <tr>
+                                    <td>{{ category.name }}</td>
+                                    <td>{{ category.count }}</td>
+                                    <td>${{ category.principal|format_currency }}</td>
+                                    <td>{{ category.avg_interest_rate }}%</td>
+                                    <td>{{ category.avg_term }} months</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar {% if category.risk_level < 30 %}bg-success{% elif category.risk_level < 70 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                role="progressbar" 
+                                                style="width: {{ category.risk_level }}%" 
+                                                aria-valuenow="{{ category.risk_level }}" 
+                                                aria-valuemin="0" 
+                                                aria-valuemax="100">
+                                                {{ category.risk_level }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Loan Status Chart
+    const loanStatusCtx = document.getElementById('loanStatusChart').getContext('2d');
+    const loanStatusChart = new Chart(loanStatusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ loan_status_labels|tojson|safe }},
+            datasets: [{
+                data: {{ loan_status_data|tojson|safe }},
+                backgroundColor: [
+                    '#28a745', // Current
+                    '#ffc107', // Late
+                    '#dc3545', // Default
+                    '#17a2b8', // Paid Off
+                    '#6c757d'  // Other
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                }
+            }
+        }
+    });
+
+    // Cash Flow Chart
+    const cashFlowCtx = document.getElementById('cashFlowChart').getContext('2d');
+    const cashFlowChart = new Chart(cashFlowCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ cash_flow_labels|tojson }},
+            datasets: [{
+                label: 'Expected Income',
+                data: {{ cash_flow_income|tojson }},
+                backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                borderColor: '#28a745',
+                borderWidth: 1
+            }, {
+                label: 'Expected Expenses',
+                data: {{ cash_flow_expenses|tojson }},
+                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                borderColor: '#dc3545',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
